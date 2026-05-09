@@ -1,0 +1,12 @@
+build/
+install/
+log/
+
+.agents/
+.codex/
+
+*.pyc
+__pycache__/
+.pytest_cache/
+
+*.zip
