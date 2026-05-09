@@ -48,6 +48,7 @@
       <heading_deg>0</heading_deg>
     </spherical_coordinates>
 
+
     <model name='vehicle_blue' canonical_link='chassis'>
           <pose relative_to='world'>-35.0 -5.0 0 0 0 0</pose>   <!--the pose is relative to the world by default-->
 
@@ -116,6 +117,16 @@
                   </ray>
                   <always_on>1</always_on>
                   <visualize>true</visualize>
+              </sensor>
+
+              <sensor name="front_cam" type="camera">
+                <pose>-0.2  0  0.35  0  -0.10  3.14159</pose> 
+                <update_rate>30</update_rate>
+                <camera>
+                  <horizontal_fov>1.05</horizontal_fov>
+                  <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+                </camera>
+                <always_on>true</always_on>
               </sensor>
               
               <sensor name="imu_sensor" type="imu">
@@ -289,62 +300,79 @@
               filename="gz-sim-joint-state-publisher-system">
               <publish_rate>50</publish_rate>
           </plugin>
-
+          
           <plugin
+            filename="ignition-gazebo-sensors-system"
+            name="ignition::gazebo::systems::Sensors">
+            <render_engine>ogre2</render_engine>
+          </plugin>
+          
+          <!-- <plugin
                   filename="gz-sim-sensors-system"
                   name="gz::sim::systems::Sensors">
               <render_engine>ogre2</render_engine>
-          </plugin>
+          </plugin> -->
     </model>
 
+    <!-- QR landmarks distributed around the town. -->
     <include>
+      <name>qr1_docking_station</name>
       <uri>model://qr1</uri>
-      <pose>5 2 1.5 0 1.5708 0</pose>
+      <pose>-38.85 -5 1.5 0 1.5708 0</pose>
     </include>
 
     <include>
+      <name>qr2_house_5</name>
       <uri>model://qr2</uri>
-      <pose>6 2 1.5 0 1.5708 0</pose>
+      <pose>-30 11.4540 1.5 1.5708 0 0</pose>
     </include>
 
     <include>
+      <name>qr3_house_4</name>
       <uri>model://qr3</uri>
-      <pose>5 3 1.5 0 1.5708 0</pose>
+      <pose>-15 10 1.5 1.5708 0 0</pose>
     </include>
 
     <include>
+      <name>qr4_house_1</name>
       <uri>model://qr4</uri>
-      <pose>6 3 1.5 0 1.5708 0</pose>
+      <pose>0 10 1.5 1.5708 0 0</pose>
     </include>
 
     <include>
+      <name>qr5_house_2</name>
       <uri>model://qr5</uri>
-      <pose>5 2 2.5 0 1.5708 0</pose>
+      <pose>15 11.5216 1.5 1.5708 0 0</pose>
     </include>
 
     <include>
+      <name>qr6_house_3</name>
       <uri>model://qr6</uri>
-      <pose>6 2 2.5 0 1.5708 0</pose>
+      <pose>26.0633 11.8298 1.5 1.5708 0 0</pose>
     </include>
 
     <include>
+      <name>qr7_fast_food</name>
       <uri>model://qr7</uri>
-      <pose>5 3 2.5 0 1.5708 0</pose>
+      <pose>2.2 -15.9 1.5 -1.5708 0 0</pose>
     </include>
 
     <include>
+      <name>qr8_gas_station</name>
       <uri>model://qr8</uri>
-      <pose>6 3 2.5 0 1.5708 0</pose>
+      <pose>-13.3 -17.5 1.5 -1.5708 0 0</pose>
     </include>
 
     <include>
+      <name>qr9_police_station</name>
       <uri>model://qr9</uri>
-      <pose>5 4 2.5 0 1.5708 0</pose>
+      <pose>21.2936 -14.2753 1.5 -1.5708 0 0</pose>
     </include>
 
     <include>
+      <name>qr10_community_clinic</name>
       <uri>model://qr10</uri>
-      <pose>6 4 2.5 0 1.5708 0</pose>
+      <pose>29.25 -1.15 1.5 0 -1.5708 0</pose>
     </include>
 
     <model name='asphalt_plane'>
