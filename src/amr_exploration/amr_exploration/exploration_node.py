@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import math
+import random
 import csv
 import os
 import time
@@ -56,6 +57,21 @@ class Explore(Node):
         self.declare_parameter("camera_yaw", 0.0)
         self.declare_parameter("use_lidar_for_qr_position", True)
         self.declare_parameter("qr_lidar_window_deg", 4.0)
+        self.declare_parameter("exploration_mode", "straight")
+        self.declare_parameter("free_space_turn_gain", 0.35)
+        self.declare_parameter("free_space_max_turn", 0.45)
+        self.declare_parameter("random_turn_min_interval", 2.5)
+        self.declare_parameter("random_turn_max_interval", 5.0)
+        self.declare_parameter("random_turn_strength", 0.35)
+        self.declare_parameter("small_rotation_min_interval", 2.0)
+        self.declare_parameter("small_rotation_max_interval", 4.0)
+        self.declare_parameter("small_rotation_duration", 0.45)
+        self.declare_parameter("small_rotation_speed", 0.45)
+        self.declare_parameter("landmark_scan_min_interval", 1.8)
+        self.declare_parameter("landmark_scan_max_interval", 3.0)
+        self.declare_parameter("landmark_scan_duration", 1.6)
+        self.declare_parameter("landmark_scan_speed", 0.85)
+        self.declare_parameter("landmark_drive_speed_scale", 0.9)
         self.declare_parameter("linear_speed", 0.70)
         self.declare_parameter("fast_linear_speed", 0.85)
         self.declare_parameter("turn_speed", 1.35)
@@ -96,6 +112,64 @@ class Explore(Node):
         )
         self.qr_lidar_window = math.radians(
             float(self.get_parameter("qr_lidar_window_deg").value)
+        )
+        self.exploration_mode = self.normalize_exploration_mode(
+            self.get_parameter("exploration_mode").value
+        )
+        self.free_space_turn_gain = float(
+            self.get_parameter("free_space_turn_gain").value
+        )
+        self.free_space_max_turn = max(
+            float(self.get_parameter("free_space_max_turn").value),
+            0.0,
+        )
+        self.random_turn_min_interval = max(
+            float(self.get_parameter("random_turn_min_interval").value),
+            0.1,
+        )
+        self.random_turn_max_interval = max(
+            float(self.get_parameter("random_turn_max_interval").value),
+            self.random_turn_min_interval,
+        )
+        self.random_turn_strength = max(
+            float(self.get_parameter("random_turn_strength").value),
+            0.0,
+        )
+        self.small_rotation_min_interval = max(
+            float(self.get_parameter("small_rotation_min_interval").value),
+            0.1,
+        )
+        self.small_rotation_max_interval = max(
+            float(self.get_parameter("small_rotation_max_interval").value),
+            self.small_rotation_min_interval,
+        )
+        self.small_rotation_duration = max(
+            float(self.get_parameter("small_rotation_duration").value),
+            0.05,
+        )
+        self.small_rotation_speed = max(
+            float(self.get_parameter("small_rotation_speed").value),
+            0.0,
+        )
+        self.landmark_scan_min_interval = max(
+            float(self.get_parameter("landmark_scan_min_interval").value),
+            0.1,
+        )
+        self.landmark_scan_max_interval = max(
+            float(self.get_parameter("landmark_scan_max_interval").value),
+            self.landmark_scan_min_interval,
+        )
+        self.landmark_scan_duration = max(
+            float(self.get_parameter("landmark_scan_duration").value),
+            0.1,
+        )
+        self.landmark_scan_speed = max(
+            float(self.get_parameter("landmark_scan_speed").value),
+            0.0,
+        )
+        self.landmark_drive_speed_scale = max(
+            float(self.get_parameter("landmark_drive_speed_scale").value),
+            0.0,
         )
         self.linear_speed = float(self.get_parameter("linear_speed").value)
         self.fast_linear_speed = float(self.get_parameter("fast_linear_speed").value)
@@ -170,19 +244,6 @@ class Explore(Node):
             "qr_x",
             "qr_y",
             "qr_z",
-            "distance_from_camera",
-            "estimate_source",
-            "camera_pnp_distance",
-            "lidar_range",
-            "robot_x",
-            "robot_y",
-            "robot_z",
-            "robot_qx",
-            "robot_qy",
-            "robot_qz",
-            "robot_qw",
-            "stamp_sec",
-            "stamp_nanosec",
         ]
         self.last_image_process_time = 0.0
         self.camera_frames_received = 0
@@ -194,10 +255,20 @@ class Explore(Node):
         self.escape_direction = 1.0
         self.last_progress_pose = None
         self.last_progress_check_time = time.time()
+        self.random_turn_bias = 0.0
+        self.next_random_turn_time = self.next_random_turn_update_time()
+        self.small_rotation_until = 0.0
+        self.small_rotation_direction = 1.0
+        self.next_small_rotation_time = self.next_small_rotation_update_time()
+        self.landmark_scan_until = 0.0
+        self.landmark_scan_direction = 1.0
+        self.next_landmark_scan_time = self.next_landmark_scan_update_time()
 
         self.timer = self.create_timer(self.control_period, self.control_loop)
 
-        self.get_logger().info("Wander SLAM node started.")
+        self.get_logger().info(
+            f"Wander SLAM node started in '{self.exploration_mode}' mode."
+        )
         self.get_logger().info(f"Subscribing to: {self.scan_topic}")
         self.get_logger().info(f"Subscribing to: {self.odom_topic}")
         self.get_logger().info(f"Subscribing to: {self.image_topic}")
@@ -257,20 +328,6 @@ class Explore(Node):
         output_dir = os.path.dirname(self.qr_output_file)
         if output_dir:
             os.makedirs(output_dir, exist_ok=True)
-
-        if os.path.exists(self.qr_output_file) and os.path.getsize(self.qr_output_file) > 0:
-            with open(self.qr_output_file, "r", newline="") as file:
-                reader = csv.reader(file)
-                existing_header = next(reader, [])
-
-            if existing_header == self.qr_csv_header:
-                return
-
-            backup_path = f"{self.qr_output_file}.bak_{int(time.time())}"
-            os.replace(self.qr_output_file, backup_path)
-            self.get_logger().warn(
-                f"Existing QR CSV header is outdated. Backed it up to: {backup_path}"
-            )
 
         with open(self.qr_output_file, "w", newline="") as file:
             writer = csv.writer(file)
@@ -623,30 +680,10 @@ class Explore(Node):
             )
             return
 
-        qr_position_world, distance, estimate_source, pnp_distance, lidar_range = estimate
+        qr_position_world, distance, estimate_source, _, _ = estimate
         qr_x = float(qr_position_world[0])
         qr_y = float(qr_position_world[1])
         qr_z = float(qr_position_world[2])
-
-        robot_x = ""
-        robot_y = ""
-        robot_z = ""
-        robot_qx = ""
-        robot_qy = ""
-        robot_qz = ""
-        robot_qw = ""
-
-        if self.latest_pose is not None:
-            pose = self.latest_pose
-            position = pose.position
-            orientation = pose.orientation
-            robot_x = f"{position.x:.6f}"
-            robot_y = f"{position.y:.6f}"
-            robot_z = f"{position.z:.6f}"
-            robot_qx = f"{orientation.x:.6f}"
-            robot_qy = f"{orientation.y:.6f}"
-            robot_qz = f"{orientation.z:.6f}"
-            robot_qw = f"{orientation.w:.6f}"
 
         self.qr_detections[normalized_qr] = {
             "qr_data": qr_data,
@@ -662,19 +699,6 @@ class Explore(Node):
                 f"{qr_x:.6f}",
                 f"{qr_y:.6f}",
                 f"{qr_z:.6f}",
-                f"{distance:.6f}",
-                estimate_source,
-                f"{pnp_distance:.6f}",
-                f"{lidar_range:.6f}" if lidar_range is not None else "",
-                robot_x,
-                robot_y,
-                robot_z,
-                robot_qx,
-                robot_qy,
-                robot_qz,
-                robot_qw,
-                image_msg.header.stamp.sec,
-                image_msg.header.stamp.nanosec,
             ])
 
         self.get_logger().info(
@@ -716,6 +740,156 @@ class Explore(Node):
 
     def stop_robot(self):
         self.publish_cmd(0.0, 0.0)
+
+    def normalize_exploration_mode(self, mode):
+        valid_modes = {
+            "straight",
+            "free_space",
+            "random",
+            "random_small_rotation",
+            "landmark_search",
+        }
+        normalized_mode = str(mode).strip().lower()
+        if normalized_mode in valid_modes:
+            return normalized_mode
+
+        self.get_logger().warn(
+            f"Unknown exploration_mode '{mode}'. Using 'straight'. "
+            "Available modes: straight, free_space, random, "
+            "random_small_rotation, landmark_search."
+        )
+        return "straight"
+
+    def clamp(self, value, min_value, max_value):
+        return max(min_value, min(max_value, value))
+
+    def next_random_turn_update_time(self):
+        return time.time() + random.uniform(
+            self.random_turn_min_interval,
+            self.random_turn_max_interval,
+        )
+
+    def next_small_rotation_update_time(self):
+        return time.time() + random.uniform(
+            self.small_rotation_min_interval,
+            self.small_rotation_max_interval,
+        )
+
+    def next_landmark_scan_update_time(self):
+        return time.time() + random.uniform(
+            self.landmark_scan_min_interval,
+            self.landmark_scan_max_interval,
+        )
+
+    def clear_path_linear_speed(self, front_min):
+        if front_min > self.open_space_distance:
+            return self.fast_linear_speed
+
+        clear_ratio = (front_min - self.safe_distance) / (
+            self.open_space_distance - self.safe_distance
+        )
+        clear_ratio = self.clamp(clear_ratio, 0.0, 1.0)
+        return self.linear_speed + clear_ratio * (
+            self.fast_linear_speed - self.linear_speed
+        )
+
+    def clear_path_command(
+        self,
+        front_min,
+        left_min,
+        right_min,
+        front_left_min,
+        front_right_min,
+    ):
+        cmd_linear = self.clear_path_linear_speed(front_min)
+
+        if self.exploration_mode == "free_space":
+            return self.free_space_command(
+                cmd_linear,
+                left_min,
+                right_min,
+                front_left_min,
+                front_right_min,
+            )
+
+        if self.exploration_mode == "random":
+            return self.random_motion_command(cmd_linear)
+
+        if self.exploration_mode == "random_small_rotation":
+            return self.random_small_rotation_command(cmd_linear)
+
+        if self.exploration_mode == "landmark_search":
+            return self.landmark_search_command(cmd_linear, front_min)
+
+        return cmd_linear, 0.0
+
+    def free_space_command(
+        self,
+        cmd_linear,
+        left_min,
+        right_min,
+        front_left_min,
+        front_right_min,
+    ):
+        side_balance = left_min - right_min
+        front_balance = front_left_min - front_right_min
+        cmd_angular = self.free_space_turn_gain * (
+            0.65 * side_balance + 0.35 * front_balance
+        )
+        cmd_angular = self.clamp(
+            cmd_angular,
+            -self.free_space_max_turn,
+            self.free_space_max_turn,
+        )
+        return cmd_linear, cmd_angular
+
+    def random_motion_command(self, cmd_linear):
+        now = time.time()
+        if now >= self.next_random_turn_time:
+            self.random_turn_bias = random.uniform(
+                -self.random_turn_strength,
+                self.random_turn_strength,
+            )
+            self.next_random_turn_time = self.next_random_turn_update_time()
+
+        return cmd_linear, self.random_turn_bias
+
+    def random_small_rotation_command(self, cmd_linear):
+        now = time.time()
+
+        if now >= self.small_rotation_until and now >= self.next_small_rotation_time:
+            self.small_rotation_direction = random.choice([-1.0, 1.0])
+            self.small_rotation_until = now + self.small_rotation_duration
+            self.next_small_rotation_time = self.next_small_rotation_update_time()
+
+        if now < self.small_rotation_until:
+            return (
+                min(cmd_linear, self.linear_speed * 0.65),
+                self.small_rotation_direction * self.small_rotation_speed,
+            )
+
+        return cmd_linear, 0.0
+
+    def landmark_search_command(self, cmd_linear, front_min):
+        now = time.time()
+
+        if now >= self.landmark_scan_until and now >= self.next_landmark_scan_time:
+            self.landmark_scan_direction = random.choice([-1.0, 1.0])
+            self.landmark_scan_until = now + self.landmark_scan_duration
+            self.next_landmark_scan_time = self.next_landmark_scan_update_time()
+
+        if now < self.landmark_scan_until:
+            return 0.0, self.landmark_scan_direction * self.landmark_scan_speed
+
+        drive_speed = min(
+            cmd_linear * self.landmark_drive_speed_scale,
+            self.fast_linear_speed,
+        )
+
+        if front_min > self.open_space_distance:
+            return drive_speed, 0.0
+
+        return drive_speed, self.random_motion_command(0.0)[1] * 0.5
 
     def pose_distance(self, pose_a, pose_b):
         dx = pose_a.position.x - pose_b.position.x
@@ -822,25 +996,22 @@ class Explore(Node):
             else:
                 cmd_angular = self.turn_speed
 
-        # Path is clear: move straight ahead. The robot only turns when the
-        # lidar reports an obstacle in front or it is stuck.
+        # Path is clear: let the selected exploration mode decide how curious
+        # the robot should be while keeping the same obstacle safety layer.
         else:
-            if front_min > self.open_space_distance:
-                cmd_linear = self.fast_linear_speed
-            else:
-                clear_ratio = (front_min - self.safe_distance) / (
-                    self.open_space_distance - self.safe_distance
-                )
-                clear_ratio = max(0.0, min(clear_ratio, 1.0))
-                cmd_linear = self.linear_speed + clear_ratio * (
-                    self.fast_linear_speed - self.linear_speed
-                )
-            cmd_angular = 0.0
+            cmd_linear, cmd_angular = self.clear_path_command(
+                front_min,
+                left_min,
+                right_min,
+                front_left_min,
+                front_right_min,
+            )
 
         self.publish_cmd(cmd_linear, cmd_angular)
 
         self.get_logger().info(
-            f"front={front_min:.2f}, left={left_min:.2f}, right={right_min:.2f}, "
+            f"mode={self.exploration_mode}, front={front_min:.2f}, "
+            f"left={left_min:.2f}, right={right_min:.2f}, "
             f"v={cmd_linear:.2f}, w={cmd_angular:.2f}",
             throttle_duration_sec=1.0,
         )
