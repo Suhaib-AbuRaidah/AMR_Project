@@ -111,7 +111,7 @@
                       </scan>
                       <range>
                           <min>0.08</min>
-                          <max>25.0</max>
+                          <max>30.0</max>
                           <resolution>0.01</resolution>
                       </range>
                   </ray>
@@ -120,11 +120,11 @@
               </sensor>
 
               <sensor name="front_cam" type="camera">
-                <pose>-0.2  0  0.35  0  -0.10  3.14159</pose> 
+                <pose>0.9  0  0.0  0  -0.10  0</pose> 
                 <update_rate>30</update_rate>
                 <camera>
                   <horizontal_fov>1.05</horizontal_fov>
-                  <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+                  <image><width>1280</width><height>720</height><format>R8G8B8</format></image>
                 </camera>
                 <always_on>true</always_on>
               </sensor>
@@ -307,11 +307,7 @@
             <render_engine>ogre2</render_engine>
           </plugin>
           
-          <!-- <plugin
-                  filename="gz-sim-sensors-system"
-                  name="gz::sim::systems::Sensors">
-              <render_engine>ogre2</render_engine>
-          </plugin> -->
+
     </model>
 
     <!-- QR landmarks distributed around the town. -->
@@ -324,37 +320,37 @@
     <include>
       <name>qr2_house_5</name>
       <uri>model://qr2</uri>
-      <pose>-30 11.4540 1.5 1.5708 0 0</pose>
+      <pose>-30 8.5 1.5 1.5708 0 0</pose>
     </include>
 
     <include>
       <name>qr3_house_4</name>
       <uri>model://qr3</uri>
-      <pose>-15 10 1.5 1.5708 0 0</pose>
+      <pose>-15 7.5 1.5 1.5708 0 0</pose>
     </include>
 
     <include>
       <name>qr4_house_1</name>
       <uri>model://qr4</uri>
-      <pose>0 10 1.5 1.5708 0 0</pose>
+      <pose>0 7.5 1.5 1.5708 0 0</pose>
     </include>
 
     <include>
       <name>qr5_house_2</name>
       <uri>model://qr5</uri>
-      <pose>15 11.5216 1.5 1.5708 0 0</pose>
-    </include>
+        <pose>15 8.5 1.5 1.5708 0 0</pose>
+      </include>
 
     <include>
       <name>qr6_house_3</name>
       <uri>model://qr6</uri>
-      <pose>26.0633 11.8298 1.5 1.5708 0 0</pose>
+      <pose>26.0633 8.5 1.5 1.5708 0 0</pose>
     </include>
 
     <include>
       <name>qr7_fast_food</name>
       <uri>model://qr7</uri>
-      <pose>2.2 -15.9 1.5 -1.5708 0 0</pose>
+      <pose>2.2 -14 1.5 -1.5708 0 0</pose>
     </include>
 
     <include>
@@ -372,7 +368,7 @@
     <include>
       <name>qr10_community_clinic</name>
       <uri>model://qr10</uri>
-      <pose>29.25 -1.15 1.5 0 -1.5708 0</pose>
+      <pose>27.5 -2.2 1.5 0 -1.5708 0</pose>
     </include>
 
     <model name='asphalt_plane'>
@@ -926,12 +922,56 @@
             </box>
           </geometry>
         </collision>
+        <collision name='left_side_wall_collision'>
+          <pose>-37 -1 0.85 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>5.0 0.2 1.6</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name='right_side_wall_collision'>
+          <pose>-37 -9 0.85 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>5.0 0.2 1.6</size>
+            </box>
+          </geometry>
+        </collision>
 
         <visual name='visual'>
           <pose>-39 -5 2.55 0 0 0</pose>
           <geometry>
             <box>
               <size>0.2 8 5.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.35 0.08 0.06 1</ambient>
+            <diffuse>0.70 0.16 0.12 1</diffuse>
+            <specular>0.10 0.04 0.03 1</specular>
+            <emissive>0 0 0 1</emissive>
+          </material>
+        </visual>
+        <visual name='left_side_wall_visual'>
+          <pose>-37 -1 0.85 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>5.0 0.2 1.6</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.35 0.08 0.06 1</ambient>
+            <diffuse>0.70 0.16 0.12 1</diffuse>
+            <specular>0.10 0.04 0.03 1</specular>
+            <emissive>0 0 0 1</emissive>
+          </material>
+        </visual>
+        <visual name='right_side_wall_visual'>
+          <pose>-37 -9 0.85 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>5.0 0.2 1.6</size>
             </box>
           </geometry>
           <material>
@@ -1043,11 +1083,12 @@
     <model name='Fast Food'>
       <static>1</static>
       <link name='link'>
-        <pose>0 0 1.57966 0 0 0</pose>
+        <pose>0 0 2.36949 0 0 0</pose>
         <collision name='collision'>
           <geometry>
             <mesh>
               <uri>model://fast_food/meshes/fast_food.dae</uri>
+              <scale>1.5 1.5 1.5</scale>
             </mesh>
           </geometry>
           <max_contacts>10</max_contacts>
@@ -1065,6 +1106,7 @@
           <geometry>
             <mesh>
               <uri>model://fast_food/meshes/fast_food.dae</uri>
+              <scale>1.5 1.5 1.5</scale>
             </mesh>
           </geometry>
           <material>
@@ -1134,7 +1176,7 @@
 
     <model name="community_clinic">
         <static>true</static>
-        <pose>33.4563 -1.1552 0 0 0 3.14159 </pose>
+        <pose>32.0 -3.0 0 0 0 3.14159 </pose>
 
         <link name="clinic_link">
 
@@ -1377,7 +1419,7 @@
         <kinematic>0</kinematic>
         <gravity>1</gravity>
       </link>
-      <pose>0 15 0 0 0 0</pose>
+      <pose>0 12 0 0 0 0</pose>
     </model>
 
     <model name='House 2'>
@@ -1421,7 +1463,7 @@
         <kinematic>0</kinematic>
         <gravity>1</gravity>
       </link>
-      <pose>15 15 0 0 0 0</pose>
+      <pose>15 12 0 0 0 0</pose>
     </model>
 
     <model name='House 3'>
@@ -1465,7 +1507,7 @@
         <kinematic>0</kinematic>
         <gravity>1</gravity>
       </link>
-      <pose>30 15 0 0 0 0</pose>
+      <pose>30 12 0 0 0 0</pose>
     </model>
 
     <model name='House 4'>
@@ -1509,7 +1551,7 @@
         <kinematic>0</kinematic>
         <gravity>1</gravity>
       </link>
-      <pose>-15 15 0 0 0 0</pose>
+      <pose>-15 12 0 0 0 0</pose>
     </model>
 
     <model name='House 5'>
@@ -1553,7 +1595,7 @@
         <kinematic>0</kinematic>
         <gravity>1</gravity>
       </link>
-      <pose>-30 15 0 0 0 0</pose>
+      <pose>-30 12 0 0 0 0</pose>
     </model>
 
     <model name='mud_box'>
