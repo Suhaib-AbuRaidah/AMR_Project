@@ -41,7 +41,7 @@ def generate_launch_description():
         name='static_lidar_tf_publisher',
         output='screen',
         arguments=[
-            '0', '0', '0.3',
+            '0.85', '0', '0.55',
             '0', '0', '0',
             'vehicle_blue/chassis',
             'vehicle_blue/chassis/gpu_lidar'

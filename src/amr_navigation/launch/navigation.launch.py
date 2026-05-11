@@ -12,7 +12,7 @@ def generate_launch_description():
     map_file = os.path.join(
         amr_navigation_share,
         'maps',
-        'my_town_map.yaml'
+        'my_town_map1.yaml'
     )
 
     params_file = os.path.join(

@@ -1,17 +1,22 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>amr_gui</name>
+  <name>amr_mission_executor</name>
   <version>0.0.0</version>
-  <description>tkinter-based mission console GUI for the AMR service robot. The sole entry point for mission commands per project spec §6.</description>
-  <maintainer email="boulos@example.com">boulos</maintainer>
-  <license>TODO: License declaration</license>
+  <description>
+    Mission executor node: hosts the ExecuteMission action server and translates
+    high-level missions into a sequence of Nav2 NavigateToPose goals.
+  </description>
+  <maintainer email="suhaib@example.com">suhaib</maintainer>
+  <license>TODO</license>
 
   <depend>rclpy</depend>
-  <depend>action_msgs</depend>
   <depend>geometry_msgs</depend>
+  <depend>nav2_msgs</depend>
+  <depend>action_msgs</depend>
+  <depend>builtin_interfaces</depend>
+  <depend>tf2_ros</depend>
   <depend>amr_mission_manager</depend>
-  <depend>python3-tk</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

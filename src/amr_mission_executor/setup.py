@@ -2,7 +2,7 @@ import os
 from glob import glob
 from setuptools import find_packages, setup
 
-package_name = "amr_gui"
+package_name = "amr_mission_executor"
 
 setup(
     name=package_name,
@@ -14,18 +14,19 @@ setup(
         ("share/" + package_name, ["package.xml"]),
         (os.path.join("share", package_name, "launch"),
             glob("launch/*.launch.py")),
+        (os.path.join("share", package_name, "config"),
+            glob("config/*.yaml")),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
-    maintainer="boulos",
-    maintainer_email="boulos@example.com",
-    description="Mission Console GUI",
+    maintainer="suhaib",
+    maintainer_email="suhaib@example.com",
+    description="Mission executor — bridges ExecuteMission to Nav2 NavigateToPose.",
     license="TODO",
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "mission_console = amr_gui.mission_console:main",
-            "mock_mission_server = amr_gui.mock_mission_server:main",
+            "mission_executor = amr_mission_executor.mission_node:main",
         ],
     },
 )
