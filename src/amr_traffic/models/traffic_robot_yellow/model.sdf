@@ -22,7 +22,7 @@
       </inertial>
       <visual name="visual">
         <geometry>
-          <box><size>1.0 0.6 0.3</size></box>
+          <box><size>2.0 1.0 0.5</size></box>
         </geometry>
         <material>
           <ambient>0.5 0.45 0.0 1</ambient>
@@ -33,6 +33,24 @@
       <collision name="collision">
         <geometry>
           <box><size>1.0 0.6 0.3</size></box>
+        </geometry>
+      </collision>
+
+      <!-- ====== DETECTION BAR (for lidar visibility) ====== -->
+      <visual name="detection_bar_visual">
+        <pose>0 0 0.80 0 0 0</pose>
+        <geometry>
+          <cylinder><radius>0.24</radius><length>1.0</length></cylinder>
+        </geometry>
+        <material>
+          <ambient>0.3 0.3 0.3 0.5</ambient>
+          <diffuse>0.5 0.5 0.5 0.5</diffuse>
+        </material>
+      </visual>
+      <collision name="detection_bar_collision">
+        <pose>0 0 0.80 0 0 0</pose>
+        <geometry>
+          <cylinder><radius>0.24</radius><length>1.0</length></cylinder>
         </geometry>
       </collision>
 
@@ -69,7 +87,7 @@
 
     <!-- ====== LEFT WHEEL ====== -->
     <link name="left_wheel">
-      <pose relative_to="base_link">-0.25 0.30 -0.05 -1.5707963 0 0</pose>
+      <pose relative_to="base_link">-0.5 0.6 0 -1.5707 0 0</pose>
       <inertial>
         <mass>0.5</mass>
         <inertia>
@@ -81,7 +99,7 @@
       </inertial>
       <visual name="visual">
         <geometry>
-          <cylinder><radius>0.2</radius><length>0.1</length></cylinder>
+          <cylinder><radius>0.4</radius><length>0.2</length></cylinder>
         </geometry>
         <material>
           <ambient>0.05 0.05 0.05 1</ambient>
@@ -102,7 +120,7 @@
 
     <!-- ====== RIGHT WHEEL ====== -->
     <link name="right_wheel">
-      <pose relative_to="base_link">-0.25 -0.30 -0.05 -1.5707963 0 0</pose>
+      <pose relative_to="base_link">-0.5 -0.6 0 -1.5707 0 0</pose>
       <inertial>
         <mass>0.5</mass>
         <inertia>
@@ -114,7 +132,7 @@
       </inertial>
       <visual name="visual">
         <geometry>
-          <cylinder><radius>0.2</radius><length>0.1</length></cylinder>
+          <cylinder><radius>0.4</radius><length>0.2</length></cylinder>
         </geometry>
         <material>
           <ambient>0.05 0.05 0.05 1</ambient>
@@ -135,7 +153,7 @@
 
     <!-- ====== CASTER (front ball) ====== -->
     <link name="caster">
-      <pose relative_to="base_link">0.40 0 -0.20 0 0 0</pose>
+      <pose relative_to="base_link">0.8 0 -0.2 0 0 0</pose>
       <inertial>
         <mass>0.1</mass>
         <inertia>
@@ -197,7 +215,7 @@
     </joint>
 
     <!-- ====== DIFF-DRIVE PLUGIN ====== -->
-    <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
+    <plugin filename="ignition-gazebo-diff-drive-system" name="ignition::gazebo::systems::DiffDrive">
       <left_joint>left_wheel_joint</left_joint>
       <right_joint>right_wheel_joint</right_joint>
       <wheel_separation>0.6</wheel_separation>

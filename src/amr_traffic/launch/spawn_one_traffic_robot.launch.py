@@ -60,14 +60,14 @@ def _build_actions(context, *args, **kwargs):
         arguments=[
             # cmd_vel: ROS -> GZ
             f'/model/{robot_name}/cmd_vel'
-            f'@geometry_msgs/msg/Twist@gz.msgs.Twist',
+            f'@geometry_msgs/msg/Twist@ignition.msgs.Twist',
             # odom: GZ -> ROS
             f'/model/{robot_name}/odometry'
-            f'@nav_msgs/msg/Odometry@gz.msgs.Odometry',
+            f'@nav_msgs/msg/Odometry@ignition.msgs.Odometry',
             # scan: GZ -> ROS
             f'/world/{world_name}/model/{robot_name}/link/base_link/'
             f'sensor/gpu_lidar/scan'
-            f'@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan',
+            f'@sensor_msgs/msg/LaserScan@ignition.msgs.LaserScan',
         ],
         remappings=[
             (f'/model/{robot_name}/cmd_vel', f'/{robot_name}/cmd_vel'),

@@ -1,20 +1,12 @@
 """Top-level bringup for the full AMR service-robot system.
 
-Composes:
-  - Gazebo world (amr_gazebo/town.launch.py)
-  - ROS↔Gazebo bridge (amr_gazebo/bridge.launch.py)
-  - Nav2 stack with map + AMCL (amr_navigation/navigation.launch.py)
-  - Mission executor (amr_mission_executor/mission_executor.launch.py)
-  - Mission Console GUI (amr_gui/gui.launch.py)
+Composes Gazebo + bridge + Nav2 + mission executor + GUI, plus
+optional traffic robots and RViz.
 
-Optional features (launch args):
-  - use_rviz:=true            Launch RViz2 alongside the system.
-  - auto_init_pose:=false     Skip the automatic /initialpose publish.
-
-Default behavior: 8 seconds after launch, publishes an initial pose at
-map (0, 0, 0) so AMCL converges without manual intervention. Override
-this by passing auto_init_pose:=false and publishing /initialpose
-yourself (terminal or RViz "2D Pose Estimate").
+Args:
+  use_rviz:=true        Also launch RViz2.
+  auto_init_pose:=false Skip auto-publish of /initialpose.
+  use_traffic:=true     Spawn two traffic robots as dynamic obstacles.
 """
 
 import os
@@ -39,6 +31,7 @@ def generate_launch_description() -> LaunchDescription:
     nav_share = get_package_share_directory("amr_navigation")
     executor_share = get_package_share_directory("amr_mission_executor")
     gui_share = get_package_share_directory("amr_gui")
+    traffic_share = get_package_share_directory("amr_traffic")
 
     # ---- Launch arguments ----
     use_rviz_arg = DeclareLaunchArgument(
@@ -52,6 +45,15 @@ def generate_launch_description() -> LaunchDescription:
         description=(
             "If true, auto-publish an initial pose to /initialpose 8s "
             "after launch so AMCL doesn't need a manual click."
+        ),
+    )
+    use_traffic_arg = DeclareLaunchArgument(
+        "use_traffic",
+        default_value="false",
+        description=(
+            "If true, spawn two traffic robots (red + yellow) as "
+            "dynamic obstacles. Spawning is delayed so Gazebo has time "
+            "to load fully."
         ),
     )
 
@@ -86,11 +88,23 @@ def generate_launch_description() -> LaunchDescription:
         ),
     )
 
+    # ---- Traffic (delayed, conditional) ----
+    # Override world_name to 'default' to match Suhaib's town.world.
+    traffic_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(traffic_share, "launch", "two_traffic_robots.launch.py")
+        ),
+        launch_arguments={
+            "world_name": "default",
+        }.items(),
+    )
+    delayed_traffic = TimerAction(
+        period=15.0,
+        actions=[traffic_launch],
+        condition=IfCondition(LaunchConfiguration("use_traffic")),
+    )
+
     # ---- Auto initial pose (delayed) ----
-    # AMCL needs ~5-8 seconds after Nav2 launch to be ready to accept
-    # /initialpose. We delay 8s to be safe. If your robot does not
-    # actually spawn at world (0, 0, 0), pass auto_init_pose:=false and
-    # publish manually.
     initial_pose_yaml = (
         "{header: {frame_id: 'map'}, "
         "pose: {pose: {position: {x: 0.0, y: 0.0, z: 0.0}, "
@@ -135,13 +149,16 @@ def generate_launch_description() -> LaunchDescription:
         # args first
         use_rviz_arg,
         auto_init_pose_arg,
+        use_traffic_arg,
         # core stack
         gazebo_launch,
         bridge_launch,
         navigation_launch,
         executor_launch,
         gui_launch,
-        # extras
+        # delayed extras
         delayed_init_pose,
+        delayed_traffic,
+        # optional
         rviz_node,
     ])
