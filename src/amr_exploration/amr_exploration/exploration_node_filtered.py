@@ -227,9 +227,14 @@ class Explore(Node):
         self.declare_parameter("qr_output_file", "qr_detections.csv")
         self.declare_parameter("qr_size", 2.0)
         self.declare_parameter("camera_horizontal_fov", 1.05)
-        self.declare_parameter("camera_x", 0.2)
+        # Camera pose relative to the frame /odom reports (chassis link,
+        # but the gz-sim diff-drive plugin publishes z=0). town.world places
+        # the front_cam at chassis-frame (0.9, 0, 0.0) with pitch=-0.10, and
+        # the chassis link itself sits 0.4 m above ground, so the camera's
+        # height above the /odom reference plane is 0.4 m.
+        self.declare_parameter("camera_x", 0.9)
         self.declare_parameter("camera_y", 0.0)
-        self.declare_parameter("camera_z", 0.95)
+        self.declare_parameter("camera_z", 0.4)
         self.declare_parameter("camera_roll", 0.0)
         self.declare_parameter("camera_pitch", -0.10)
         self.declare_parameter("camera_yaw", 0.0)

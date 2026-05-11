@@ -6,6 +6,9 @@ Args:
   robot1_yaw              — default 1.5708
   robot2_x, robot2_y      — defaults (5.0, -5.0)
   robot2_yaw              — default 0.0
+  bounds_radius           — random-walker soft bounds around each spawn
+  forward_speed           — random-walker forward speed
+  obstacle_threshold      — random-walker obstacle clearance
 """
 
 from launch import LaunchDescription
@@ -21,12 +24,15 @@ def generate_launch_description():
 
     args = [
         DeclareLaunchArgument('world_name', default_value='car_world'),
-        DeclareLaunchArgument('robot1_x', default_value='-5.0'),
+        DeclareLaunchArgument('robot1_x', default_value='0.0'),
         DeclareLaunchArgument('robot1_y', default_value='5.0'),
         DeclareLaunchArgument('robot1_yaw', default_value='1.5708'),
         DeclareLaunchArgument('robot2_x', default_value='5.0'),
-        DeclareLaunchArgument('robot2_y', default_value='-5.0'),
+        DeclareLaunchArgument('robot2_y', default_value='0.0'),
         DeclareLaunchArgument('robot2_yaw', default_value='0.0'),
+        DeclareLaunchArgument('bounds_radius', default_value='25.0'),
+        DeclareLaunchArgument('forward_speed', default_value='0.70'),
+        DeclareLaunchArgument('obstacle_threshold', default_value='2.00'),
     ]
 
     spawn_robot_1 = IncludeLaunchDescription(
@@ -38,6 +44,9 @@ def generate_launch_description():
             'y': LaunchConfiguration('robot1_y'),
             'yaw': LaunchConfiguration('robot1_yaw'),
             'world_name': LaunchConfiguration('world_name'),
+            'bounds_radius': LaunchConfiguration('bounds_radius'),
+            'forward_speed': LaunchConfiguration('forward_speed'),
+            'obstacle_threshold': LaunchConfiguration('obstacle_threshold'),
         }.items(),
     )
 
@@ -50,6 +59,9 @@ def generate_launch_description():
             'y': LaunchConfiguration('robot2_y'),
             'yaw': LaunchConfiguration('robot2_yaw'),
             'world_name': LaunchConfiguration('world_name'),
+            'bounds_radius': LaunchConfiguration('bounds_radius'),
+            'forward_speed': LaunchConfiguration('forward_speed'),
+            'obstacle_threshold': LaunchConfiguration('obstacle_threshold'),
         }.items(),
     )
 

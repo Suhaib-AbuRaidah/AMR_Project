@@ -56,6 +56,26 @@ def generate_launch_description() -> LaunchDescription:
             "to load fully."
         ),
     )
+    traffic_robot1_x_arg = DeclareLaunchArgument(
+        "traffic_robot1_x",
+        default_value="-8.0",
+        description="Traffic robot 1 spawn x position.",
+    )
+    traffic_robot1_y_arg = DeclareLaunchArgument(
+        "traffic_robot1_y",
+        default_value="-3.0",
+        description="Traffic robot 1 spawn y position.",
+    )
+    traffic_robot2_x_arg = DeclareLaunchArgument(
+        "traffic_robot2_x",
+        default_value="10.0",
+        description="Traffic robot 2 spawn x position.",
+    )
+    traffic_robot2_y_arg = DeclareLaunchArgument(
+        "traffic_robot2_y",
+        default_value="0.0",
+        description="Traffic robot 2 spawn y position.",
+    )
 
     # ---- Sub-launches ----
     gazebo_launch = IncludeLaunchDescription(
@@ -96,10 +116,10 @@ def generate_launch_description() -> LaunchDescription:
         ),
         launch_arguments={
             "world_name": "default",
-            "robot1_x": "-3.0",     # west part of the busy zone
-            "robot1_y": "-3.0",
-            "robot2_x": "10.0",      # east part of the busy zone
-            "robot2_y": "-3.0",
+            "robot1_x": LaunchConfiguration("traffic_robot1_x"),
+            "robot1_y": LaunchConfiguration("traffic_robot1_y"),
+            "robot2_x": LaunchConfiguration("traffic_robot2_x"),
+            "robot2_y": LaunchConfiguration("traffic_robot2_y"),
             "bounds_radius": "15.0",  # tighter wander radius → stays in busy zone
             "forward_speed": "1.0",
         }.items(),
@@ -156,6 +176,10 @@ def generate_launch_description() -> LaunchDescription:
         use_rviz_arg,
         auto_init_pose_arg,
         use_traffic_arg,
+        traffic_robot1_x_arg,
+        traffic_robot1_y_arg,
+        traffic_robot2_x_arg,
+        traffic_robot2_y_arg,
         # core stack
         gazebo_launch,
         bridge_launch,

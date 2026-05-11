@@ -17,7 +17,7 @@ def generate_launch_description():
     # ---------------- Launch arguments ----------------
     exploration_mode_arg = DeclareLaunchArgument(
         'exploration_mode',
-        default_value='free_space',
+        default_value='straight',
         description=(
             'Exploration strategy: straight, free_space, random, '
             'random_small_rotation, landmark_search'
@@ -66,7 +66,6 @@ def generate_launch_description():
                 PythonLaunchDescriptionSource(exploration_launch_file),
                 launch_arguments={
                     'exploration_mode': exploration_mode,
-                    'use_ekf_filter': 'true',
                 }.items(),
             )
         ],
