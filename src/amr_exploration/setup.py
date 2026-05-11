@@ -26,6 +26,7 @@ setup(
     entry_points={
         'console_scripts': [
             'exploration_node = amr_exploration.exploration_node:main',
+            'exploration_node_filtered = amr_exploration.exploration_node_filtered:main',
         ],
     },
 )
