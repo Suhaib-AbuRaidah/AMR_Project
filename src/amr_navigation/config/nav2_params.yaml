@@ -89,7 +89,7 @@ controller_server:
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
     min_theta_velocity_threshold: 0.001
-    failure_tolerance: 0.3
+    failure_tolerance: 0.1
 
     progress_checker_plugins: ["progress_checker"]
     goal_checker_plugins: ["general_goal_checker"]
@@ -111,22 +111,22 @@ controller_server:
       debug_trajectory_details: false
       min_vel_x: 0.0
       min_vel_y: 0.0
-      max_vel_x: 1.5
+      max_vel_x: 2.5
       max_vel_y: 0.0
-      max_vel_theta: 1.5
+      max_vel_theta: 2.5
       min_speed_xy: 0.0
-      max_speed_xy: 1.0
+      max_speed_xy: 2.5
       min_speed_theta: 0.0
-      acc_lim_x: 2.0
+      acc_lim_x: 4.0
       acc_lim_y: 0.0
-      acc_lim_theta: 3.0
-      decel_lim_x: -2.0
+      acc_lim_theta: 4.0
+      decel_lim_x: -4.0
       decel_lim_y: 0.0
-      decel_lim_theta: -3.0
-      vx_samples: 20
+      decel_lim_theta: -4.0
+      vx_samples: 30
       vy_samples: 1
       vtheta_samples: 20
-      sim_time: 1.7
+      sim_time: 0.8
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 0.3
@@ -143,13 +143,13 @@ controller_server:
         - PathAlign
         - PathDist
         - GoalDist
-      BaseObstacle.scale: 0.5
-      ObstacleFootprint.scale: 0.5
-      PathAlign.scale: 32.0
+      BaseObstacle.scale: 2.0
+      ObstacleFootprint.scale: 2.0
+      PathAlign.scale: 24.0
       PathAlign.forward_point_distance: 0.1
       GoalAlign.scale: 24.0
       GoalAlign.forward_point_distance: 0.1
-      PathDist.scale: 32.0
+      PathDist.scale: 24.0
       GoalDist.scale: 24.0
 #      RotateToGoal.scale: 32.0
 #     RotateToGoal.slowing_factor: 5.0
@@ -208,14 +208,14 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: false
     feedback: "OPEN_LOOP"
-    max_velocity: [1.0, 0.0, 1.5]    # was [0.5, 0.0, 1.0]
-    min_velocity: [0.0, 0.0, -1.5]   # was [0.0, 0.0, -1.0]
-    max_accel: [2.0, 0.0, 3.0]       # was [1.0, 0.0, 2.0]
-    max_decel: [-2.0, 0.0, -3.0]     # was [-1.0, 0.0, -2.0]
+    max_velocity: [2.5, 0.0, 2.5]    # was [1.5, 0.0, 1.5]
+    min_velocity: [0.0, 0.0, -2.5]
+    max_accel: [4.0, 0.0, 4.0]       # was [2.5, 0.0, 3.0]
+    max_decel: [-4.0, 0.0, -4.0]
     odom_topic: /vehicle_blue/odom
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
-    velocity_timeout: 1.0
+    velocity_timeout: 0.1
 
 local_costmap:
   local_costmap:
@@ -226,11 +226,12 @@ local_costmap:
       update_frequency: 15.0
       publish_frequency: 2.0
       rolling_window: true
-      width: 4
-      height: 4
+      width: 10
+      height: 10
       resolution: 0.05
 
-      robot_radius: 0.6
+    #  robot_radius: 0.6
+      footprint: "[[-1.05, -0.75], [-1.05, 0.75], [1.05, 0.75], [1.05, -0.75]]"
 
       plugins: ["obstacle_layer", "inflation_layer"]
 
@@ -251,8 +252,8 @@ local_costmap:
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.7
+        cost_scaling_factor: 2.5
+        inflation_radius: 2.5
 
       always_send_full_costmap: true
 
@@ -262,12 +263,13 @@ global_costmap:
       use_sim_time: true
       global_frame: map
       robot_base_frame: vehicle_blue/chassis
-      update_frequency: 1.0
-      publish_frequency: 1.0
+      update_frequency: 5.0
+      publish_frequency: 5.0
       resolution: 0.05
       track_unknown_space: true
 
-      robot_radius: 0.6
+     # robot_radius: 0.6
+      footprint: "[[-1.05, -0.75], [-1.05, 0.75], [1.05, 0.75], [1.05, -0.75]]"
 
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
 
@@ -293,7 +295,7 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.7
+        inflation_radius: 2.5
 
       always_send_full_costmap: true
 

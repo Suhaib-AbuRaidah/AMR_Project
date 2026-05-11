@@ -96,6 +96,12 @@ def generate_launch_description() -> LaunchDescription:
         ),
         launch_arguments={
             "world_name": "default",
+            "robot1_x": "-3.0",     # west part of the busy zone
+            "robot1_y": "-3.0",
+            "robot2_x": "10.0",      # east part of the busy zone
+            "robot2_y": "-3.0",
+            "bounds_radius": "15.0",  # tighter wander radius → stays in busy zone
+            "forward_speed": "1.0",
         }.items(),
     )
     delayed_traffic = TimerAction(

@@ -114,7 +114,7 @@ def generate_launch_description():
         DeclareLaunchArgument('yaw', default_value='0.0'),
         DeclareLaunchArgument('world_name', default_value='car_world'),
         DeclareLaunchArgument('bounds_radius', default_value='25.0'),
-        DeclareLaunchArgument('forward_speed', default_value='1.20'),
+        DeclareLaunchArgument('forward_speed', default_value='0.70'),
         DeclareLaunchArgument('obstacle_threshold', default_value='2.00'),
         OpaqueFunction(function=_build_actions),
     ])

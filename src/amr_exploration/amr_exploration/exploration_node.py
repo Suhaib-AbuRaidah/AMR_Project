@@ -75,6 +75,8 @@ class Explore(Node):
         self.declare_parameter("linear_speed", 0.70)
         self.declare_parameter("fast_linear_speed", 0.85)
         self.declare_parameter("turn_speed", 1.35)
+        self.declare_parameter("straight_turn_speed", 0.85)
+        self.declare_parameter("straight_angular_accel", 1.2)
         self.declare_parameter("safe_distance",1.5)
         self.declare_parameter("stop_distance", 0.8)
         self.declare_parameter("open_space_distance", 3.0)
@@ -174,6 +176,13 @@ class Explore(Node):
         self.linear_speed = float(self.get_parameter("linear_speed").value)
         self.fast_linear_speed = float(self.get_parameter("fast_linear_speed").value)
         self.turn_speed = float(self.get_parameter("turn_speed").value)
+        self.straight_turn_speed = float(
+            self.get_parameter("straight_turn_speed").value
+        )
+        self.straight_angular_accel = max(
+            float(self.get_parameter("straight_angular_accel").value),
+            0.1,
+        )
         self.safe_distance = float(self.get_parameter("safe_distance").value)
         self.stop_distance = float(self.get_parameter("stop_distance").value)
         self.open_space_distance = float(self.get_parameter("open_space_distance").value)
@@ -263,6 +272,8 @@ class Explore(Node):
         self.landmark_scan_until = 0.0
         self.landmark_scan_direction = 1.0
         self.next_landmark_scan_time = self.next_landmark_scan_update_time()
+        self.last_cmd_angular = 0.0
+        self.last_cmd_time = time.time()
 
         self.timer = self.create_timer(self.control_period, self.control_loop)
 
@@ -763,6 +774,31 @@ class Explore(Node):
     def clamp(self, value, min_value, max_value):
         return max(min_value, min(max_value, value))
 
+    def active_turn_speed(self):
+        if self.exploration_mode == "straight":
+            return self.straight_turn_speed
+
+        return self.turn_speed
+
+    def smooth_straight_angular(self, target_angular):
+        if self.exploration_mode != "straight":
+            self.last_cmd_angular = target_angular
+            self.last_cmd_time = time.time()
+            return target_angular
+
+        now = time.time()
+        dt = max(now - self.last_cmd_time, self.control_period)
+        max_delta = self.straight_angular_accel * dt
+        delta = self.clamp(
+            target_angular - self.last_cmd_angular,
+            -max_delta,
+            max_delta,
+        )
+
+        self.last_cmd_angular += delta
+        self.last_cmd_time = now
+        return self.last_cmd_angular
+
     def next_random_turn_update_time(self):
         return time.time() + random.uniform(
             self.random_turn_min_interval,
@@ -942,9 +978,13 @@ class Explore(Node):
 
         scan = self.latest_scan
         self.update_escape_behavior()
+        turn_speed = self.active_turn_speed()
 
         if time.time() < self.escape_until:
-            self.publish_cmd(0.0, self.escape_direction * self.turn_speed)
+            cmd_angular = self.smooth_straight_angular(
+                self.escape_direction * turn_speed
+            )
+            self.publish_cmd(0.0, cmd_angular)
             return
 
         # Main sectors
@@ -983,18 +1023,18 @@ class Explore(Node):
 
             # Turn toward the more open side
             if front_left_min < front_right_min:
-                cmd_angular = -self.turn_speed
+                cmd_angular = -turn_speed
             else:
-                cmd_angular = self.turn_speed
+                cmd_angular = turn_speed
 
         # Obstacle ahead: turn away
         elif front_min < self.safe_distance:
             cmd_linear = 0.05
 
             if front_left_min < front_right_min:
-                cmd_angular = -self.turn_speed
+                cmd_angular = -turn_speed
             else:
-                cmd_angular = self.turn_speed
+                cmd_angular = turn_speed
 
         # Path is clear: let the selected exploration mode decide how curious
         # the robot should be while keeping the same obstacle safety layer.
@@ -1007,6 +1047,7 @@ class Explore(Node):
                 front_right_min,
             )
 
+        cmd_angular = self.smooth_straight_angular(cmd_angular)
         self.publish_cmd(cmd_linear, cmd_angular)
 
         self.get_logger().info(
