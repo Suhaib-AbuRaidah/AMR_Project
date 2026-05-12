@@ -9,4 +9,13 @@ log/
 __pycache__/
 .pytest_cache/
 
+# Large local artifacts and demo media
 *.zip
+*.mp4
+*.mkv
+*.mov
+*.avi
+*.pdf
+pdf_files/
+videos/
+Demo_&_Presentation/
